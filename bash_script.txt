@@ -1,0 +1,50 @@
+#!/bin/bash
+
+#clears the screen
+clear
+
+#creates a text file called "new_file.txt and adds two text lines as contents"
+echo "This is the content of the file." > new_file.txt
+echo "This is another line." >> new_file.txt #Appends to the file
+
+#defining directory location of file to copy and destination new folder name
+file_to_move="/home/student/carrunategui/new_file.txt"
+new_folder_name="new_folder"
+
+#if new directory exists, remove it so that it can be added again if the script is ran more than once
+dir_path="/home/student/carrunategui/new_folder"
+if [ -d "$dir_path" ]; then
+        rm -rf "$dir_path"
+        echo "Directory '$dir_path' removed."
+else
+        echo "Directory '$dir_path' does not exist."
+fi
+
+#update file permissions for new_file.txt
+chmod u+w "$file_to_move"
+echo "Write permission added for the owner"
+
+#create new folder named "new_folder"
+mkdir "$new_folder_name"
+
+#copying new_file.txt to the new folder
+if [ $? -eq 0 ]; then
+        mv "$file_to_move" "$new_folder_name"
+
+        if [ $? -eq 0 ]; then
+                echo "File moved successfully to $new_folder_name"
+        else
+                echo "Error moving file"
+        fi
+else
+        echo "Error creating directory"
+fi
+
+#moves outputfile.html file 
+
+mv "outputfile.html" "new_folder"
+
+#display current directory contents
+ls
+#display current working directory
+pwd

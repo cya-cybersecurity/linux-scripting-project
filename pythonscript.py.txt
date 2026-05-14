@@ -1,0 +1,104 @@
+import sys
+import sqlite3
+
+def calcFullHeight(a, b):
+        feetToInch = a * 12
+        fullHeight = feetToInch + b
+        return fullHeight
+
+def calcBMI(a, b):
+        userBMI = int((b / (a * a)) * 703)
+        return userBMI
+
+def bmiGreaterThirty(a):
+        overThirty = bool(bmi >= 30)
+        if overThirty:
+                print("Good lets get started!")
+        else:
+                print("What are you doing here? You need some meat on those bones!")
+                sys.exit()
+
+def ageCheck(a):
+        if(age < 21 or age > 60):
+                print("Sorry, you do not meet our age requirement. :(")
+                sys.exit()
+
+def desWeightCheck(a, b):
+        while a < 150 or a > b:
+                a = int(input("Oops the desired weight needs to be above 150 and less than your current weight. Try again: "))
+        print("There you go!")
+
+def howManyWeeks(a, b):
+        weeksLong = a - b
+        return weeksLong
+outputResults = "userResults.txt"
+userName = input("Enter name: ")
+curWeight = int(input("Enter weight(lbs): "))
+heightFeet = int(input("Enter height(feet only): "))
+heightInches =  int(input("Enter height(inches only: "))
+fullHeight = calcFullHeight(heightFeet, heightInches)
+bmi = calcBMI(fullHeight, curWeight)
+print(userName, "'s BMI is: ", bmi)
+bmiGreaterThirty(bmi)
+genderInput = input("Enter your gender (M or F): ").upper()
+age = int(input("Enter your age: "))
+ageCheck(age)
+desWeight = int(input("Enter your desired weight(Above 150): "))
+desWeightCheck(desWeight, curWeight)
+
+
+connection = sqlite3.connect("testdb.db")
+cVar = connection.cursor()
+cVar.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='dailycals'")
+tableExist = cVar.fetchone()
+
+if not tableExist:
+        cVar.execute( """ CREATE TABLE dailycals (
+                recordkey INTEGER PRIMARY KEY,
+                agefrom INTEGER,
+                ageto INTEGER,
+                gender CHAR(1),
+                calories INTEGER);""")
+        cVar.execute("SELECT COUNT(*) FROM dailycals")
+if not tableExist:
+
+        records = [
+        (1, 21, 40, "M", 2400),
+        (2, 41, 50, "M", 2200),
+        (3, 51, 60, "M", 2200),
+        (4, 21, 40, "F", 2000),
+        (5, 41, 50, "F", 1800),
+        (6, 51, 60, "F", 1600)
+        ]
+        cVar.executemany("INSERT INTO dailycals VALUES (?, ?, ?, ?, ?)", records)
+        connection.commit()
+
+result=cVar.fetchall()
+for i in result:
+    print(i)
+query = """SELECT calories FROM dailycals WHERE gender = ? AND ? BETWEEN agefrom AND ageto"""
+
+cVar.execute(query, (genderInput, age))
+result = cVar.fetchone()
+if result:
+        recommendedCalories = result[0] - 500
+        weeksLong = howManyWeeks(curWeight, desWeight)
+        print("\n", userName, "'s recommended daily calorie intake is:", recommendedCalories, "calories a day")
+
+        print("It will take you:", weeksLong, "weeks to get to", desWeight, "pounds while losing 1 pound a week")
+
+else:
+        print("oops")
+with open(outputResults, 'w') as f:
+        f.write(f"Calculator info \n \n \n")
+        f.write(f"Name: {userName}")
+        f.write(f"\n CurWeight: {curWeight}")
+        f.write(f"\n Full Height: {fullHeight}")
+        f.write(f"\n BMI: {bmi}")
+        f.write(f"\n Gender: {genderInput}")
+        f.write(f"\n Age: {age}")
+        f.write(f"\n DesWeight: {desWeight}")
+        f.write(f"\n Recommended Calories: {recommendedCalories}")
+        f.write(f"\n Weeks to lose the calories: {weeksLong}")
+
+connection.close()
